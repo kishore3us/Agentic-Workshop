@@ -58,6 +58,16 @@ def test_accepts_each_priority(priority: str) -> None:
         ({"rationale": "First sentence. Second sentence."}, "rationale must be one sentence"),
         ({"rationale": "First.Second"}, "rationale must be one sentence"),
         ({"rationale": "First.second"}, "rationale must be one sentence"),
+        ({"rationale": "the first.second"}, "rationale must be one sentence"),
+        ({"rationale": "The account is down!please help."}, "rationale must be one sentence"),
+        ({"rationale": "The account is down?please help."}, "rationale must be one sentence"),
+        ({"rationale": "First sentence! Second sentence."}, "rationale must be one sentence"),
+        ({"rationale": "First sentence? Second sentence."}, "rationale must be one sentence"),
+        ({"rationale": 'The error says "failed." Restart the service.'}, "rationale must be one sentence"),
+        ({"rationale": "The error was (timeout.) Restart the service."}, "rationale must be one sentence"),
+        ({"rationale": "The user is in the U.S. Needs access."}, "rationale must be one sentence"),
+        ({"rationale": "The account is locked\nReset access"}, "rationale must be one sentence"),
+        ({"rationale": "問題があります。対応してください。"}, "rationale must be one sentence"),
         ({"rationale": "Access failed, etc. Reset the account."}, "rationale must be one sentence"),
         ({"rationale": "..."}, "rationale must be one non-empty sentence"),
         ({"rationale": 42}, "rationale"),
@@ -76,11 +86,20 @@ def test_rejects_invalid_decisions(change: dict, error_fragment: str) -> None:
         TriageDecision.model_validate(data)
 
 
-def test_rejects_missing_field_and_non_object_json() -> None:
-    with pytest.raises(ValidationError, match="rationale"):
-        TriageDecision.model_validate(
-            {"category": "billing", "priority": "P2", "route": "billing-team"}
-        )
+@pytest.mark.parametrize("missing_field", ["category", "priority", "route", "rationale"])
+def test_rejects_missing_field(missing_field: str) -> None:
+    data = {
+        "category": "billing",
+        "priority": "P2",
+        "route": "billing-team",
+        "rationale": "The ticket concerns a charge.",
+    }
+    del data[missing_field]
+    with pytest.raises(ValidationError, match=missing_field):
+        TriageDecision.model_validate(data)
+
+
+def test_rejects_non_object_json() -> None:
     with pytest.raises(ValidationError):
         TriageDecision.model_validate_json(json.dumps(["billing", "P2"]))
 
@@ -91,6 +110,13 @@ def test_accepts_single_sentence_with_abbreviation() -> None:
         "The U.S. customer needs access.",
         "Jan. 2026 charge is disputed.",
         "The example.com domain has an issue.",
+        "A. Smith cannot log in.",
+        "Acme Inc. reports a billing failure.",
+        "The U.S.A. customer cannot log in.",
+        "The outage began at 5 p.m. yesterday.",
+        "We tried... but the page still fails.",
+        "The account is locked\nand needs reset.",
+        "問題があります。",
     ):
         decision = TriageDecision(
             category="access", priority="P4", route="access-team", rationale=rationale
