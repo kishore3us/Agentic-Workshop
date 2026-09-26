@@ -1,0 +1,14 @@
+- id: "1"
+  title: Validate triage decisions
+  description: >-
+    Implement CAP-1 in SPEC.md using the exact JSON fields, allowed values,
+    category-route pairs, and clear errors in decision-schema.md.
+  spec_checkpoint: false
+  done_checkpoint: false
+- id: "2"
+  title: Load local seed data
+  description: >-
+    Implement CAP-2 in SPEC.md using data-contract.md: load both read-only CSVs
+    into repo-root app.db, preserve the MCP query shape, and make repeat runs idempotent.
+  spec_checkpoint: false
+  done_checkpoint: false
